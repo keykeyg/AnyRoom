@@ -40,6 +40,11 @@ rm -rf "$HDR"; mkdir -p "$HDR"
 cp -R "$SRC/lib/include/chiaki" "$HDR/"
 find "$OUT/build-TVOS" -path "*include/chiaki/*.h" -exec cp {} "$HDR/chiaki/" \;
 rm -f "$HDR/chiaki/version.h.in"
+# chiaki/ecdh.h includes mbedtls headers, so ship mbedTLS's public headers next to chiaki's.
+MBED_INC="$(find "$OUT/build-TVOS" -type d -path "*mbedtls-src/include" | head -1)"
+[ -n "$MBED_INC" ] || { echo "mbedtls include dir not found"; exit 1; }
+cp -R "$MBED_INC"/. "$HDR/"
+rm -f "$HDR/CMakeLists.txt"
 cat > "$HDR/module.modulemap" <<'EOF'
 module Chiaki {
     umbrella "chiaki"
