@@ -22,10 +22,18 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
-      - name: Build (tvOS simulator)
+      # Builds for the generic Apple TV device target, unsigned: no simulator runtime needed on
+      # the runner, and it compiles the same arm64 slice that ships. (Upstream's
+      # Tools/dev/run_debug_build.sh asks for a named simulator the hosted runner doesn't have.)
+      - name: Build (tvOS device, unsigned)
         run: |
           set -o pipefail
-          bash Tools/dev/run_debug_build.sh 2>&1 | tee build.log
+          xcodebuild -version
+          xcodebuild -quiet -workspace Stratix.xcworkspace -scheme Stratix-Debug \
+            -destination 'generic/platform=tvOS' \
+            -derivedDataPath "$RUNNER_TEMP/dd" -clonedSourcePackagesDirPath "$RUNNER_TEMP/spm" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build.log
       - name: Report errors
         if: failure()
         run: |
