@@ -5,6 +5,7 @@
 import SwiftUI
 import StratixCore
 import XCloudAPI
+import PlayStationKit
 
 /// Renders the available remote-play consoles and owns the console-to-stream modal transition.
 struct ConsoleListView: View {
@@ -85,6 +86,9 @@ struct ConsoleListView: View {
 
             contentSection
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+            // PS5 and PS4 consoles (Remote Play via PlayStationKit) sit under the Xbox ones.
+            PlayStationConsolesSection()
         }
         .padding(.top, 28)
         .padding(.horizontal, StratixTheme.Layout.outerPadding)

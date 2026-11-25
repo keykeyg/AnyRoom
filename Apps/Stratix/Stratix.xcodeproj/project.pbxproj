@@ -76,6 +76,7 @@
 		AA0001000000000000000010 /* StratixModels in Frameworks */ = {isa = PBXBuildFile; productRef = AA0009000000000000000001 /* StratixModels */; };
 		AA0001000000000000000011 /* InputBridge in Frameworks */ = {isa = PBXBuildFile; productRef = AA0009000000000000000002 /* InputBridge */; };
 		AA0001000000000000000012 /* XCloudAPI in Frameworks */ = {isa = PBXBuildFile; productRef = AA0009000000000000000003 /* XCloudAPI */; };
+		AA0001000000000000000099 /* PlayStationKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA0009000000000000000099 /* PlayStationKit */; };
 		AA0001000000000000000013 /* StreamingCore in Frameworks */ = {isa = PBXBuildFile; productRef = AA0009000000000000000004 /* StreamingCore */; };
 		AA0001000000000000000014 /* DiagnosticsKit in Frameworks */ = {isa = PBXBuildFile; productRef = AA0009000000000000000005 /* DiagnosticsKit */; };
 		AA0001000000000000000016 /* StratixCore in Frameworks */ = {isa = PBXBuildFile; productRef = AA0009000000000000000007 /* StratixCore */; };
@@ -525,6 +526,7 @@
 				AA0001000000000000000010 /* StratixModels in Frameworks */,
 				AA0001000000000000000011 /* InputBridge in Frameworks */,
 				AA0001000000000000000012 /* XCloudAPI in Frameworks */,
+				AA0001000000000000000099 /* PlayStationKit in Frameworks */,
 				AA0001000000000000000013 /* StreamingCore in Frameworks */,
 				AA0001000000000000000014 /* DiagnosticsKit in Frameworks */,
 				AA0001000000000000000016 /* StratixCore in Frameworks */,
@@ -1336,6 +1338,7 @@
 				AA0009000000000000000001 /* StratixModels */,
 				AA0009000000000000000002 /* InputBridge */,
 				AA0009000000000000000003 /* XCloudAPI */,
+				AA0009000000000000000099 /* PlayStationKit */,
 				AA0009000000000000000004 /* StreamingCore */,
 				AA0009000000000000000005 /* DiagnosticsKit */,
 				AA0009000000000000000007 /* StratixCore */,
@@ -1414,6 +1417,7 @@
 				AA000A000000000000000001 /* XCLocalSwiftPackageReference "../../Packages/StratixModels" */,
 				AA000A000000000000000002 /* XCLocalSwiftPackageReference "../../Packages/InputBridge" */,
 				AA000A000000000000000003 /* XCLocalSwiftPackageReference "../../Packages/XCloudAPI" */,
+				AA000A000000000000000099 /* XCLocalSwiftPackageReference "../../Packages/PlayStationKit" */,
 				AA000A000000000000000004 /* XCLocalSwiftPackageReference "../../Packages/StreamingCore" */,
 				AA000A000000000000000005 /* XCLocalSwiftPackageReference "../../Packages/DiagnosticsKit" */,
 				AA000A000000000000000007 /* XCLocalSwiftPackageReference "../../Packages/StratixCore" */,
@@ -2387,6 +2391,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../../Packages/XCloudAPI;
 		};
+		AA000A000000000000000099 /* XCLocalSwiftPackageReference "../../Packages/PlayStationKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../Packages/PlayStationKit;
+		};
 		AA000A000000000000000004 /* XCLocalSwiftPackageReference "../../Packages/StreamingCore" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../../Packages/StreamingCore;
@@ -2436,6 +2444,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AA000A000000000000000003 /* XCLocalSwiftPackageReference "../../Packages/XCloudAPI" */;
 			productName = XCloudAPI;
+		};
+		AA0009000000000000000099 /* PlayStationKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA000A000000000000000099 /* XCLocalSwiftPackageReference "../../Packages/PlayStationKit" */;
+			productName = PlayStationKit;
 		};
 		AA0009000000000000000004 /* StreamingCore */ = {
 			isa = XCSwiftPackageProductDependency;
