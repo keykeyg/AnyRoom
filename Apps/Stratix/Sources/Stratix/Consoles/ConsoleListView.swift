@@ -11,6 +11,7 @@ import PlayStationKit
 struct ConsoleListView: View {
     @Environment(ConsoleController.self) var consoleController
     @Environment(StreamController.self) var streamController
+    @Environment(SettingsStore.self) var settingsStore
     var onRequestSideRailEntry: () -> Void = {}
     @State var showingStream = false
     @State var selectedConsole: RemoteConsole?
@@ -88,7 +89,12 @@ struct ConsoleListView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
             // PS5 and PS4 consoles (Remote Play via PlayStationKit) sit under the Xbox ones.
-            PlayStationConsolesSection()
+            PlayStationConsolesSection(onApplyMode: { mode in
+                // One stream mode for both consoles: mirror it into the Xbox quality preset.
+                var stream = settingsStore.stream
+                stream.qualityPreset = mode.xboxPreset
+                settingsStore.stream = stream
+            })
         }
         .padding(.top, 28)
         .padding(.horizontal, StratixTheme.Layout.outerPadding)

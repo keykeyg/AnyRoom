@@ -16,8 +16,13 @@ public struct PlayStationConsolesSection: View {
     @State private var streaming: PSConsole?
     @State private var addingAddress = false
     @State private var address = ""
+    @State private var showingSettings = false
+    private let onApplyMode: (AnyroomStreamMode) -> Void
 
-    public init() {}
+    /// `onApplyMode` lets the app set the matching Xbox quality preset when the stream mode changes.
+    public init(onApplyMode: @escaping (AnyroomStreamMode) -> Void = { _ in }) {
+        self.onApplyMode = onApplyMode
+    }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -26,6 +31,7 @@ public struct PlayStationConsolesSection: View {
                     .font(.system(size: 32, weight: .heavy, design: .rounded))
                 if hub.isSearching { ProgressView() }
                 Spacer()
+                Button("Stream settings & lag test") { showingSettings = true }
                 Button("Search again") { hub.startDiscovery() }
                 Button("Add by IP address") { addingAddress = true }
             }
@@ -53,6 +59,9 @@ public struct PlayStationConsolesSection: View {
         }
         .onAppear { hub.startDiscovery() }
         .onDisappear { hub.stopDiscovery() }
+        .sheet(isPresented: $showingSettings) {
+            AnyroomStreamSettingsView(onApplyMode: onApplyMode) { showingSettings = false }
+        }
         .sheet(item: $pairing) { console in
             PSPairingView(console: console) { pairing = nil }
         }
@@ -257,6 +266,7 @@ struct PSStreamScreen: View {
     @StateObject private var session: StreamSession
     @State private var showMenu = false
     @AppStorage("anyroom.ps.stats") private var showStats = false
+    @AppStorage("anyroom.ps.display") private var displayModeRaw = DisplayMode.fit.rawValue
     @State private var statsText = ""
     @State private var lastDropped: UInt64?
     @State private var pin = ""
@@ -273,7 +283,7 @@ struct PSStreamScreen: View {
                               onMenuButton: { showMenu.toggle() }) {
             ZStack {
                 Color.black.ignoresSafeArea()
-                StreamVideoView(aspectRatio: 16.0 / 9.0, displayMode: .fit) { view in
+                StreamVideoView(aspectRatio: 16.0 / 9.0, displayMode: DisplayMode(rawValue: displayModeRaw) ?? .fit) { view in
                     session.attachToView(view)
                 }
                 .ignoresSafeArea()

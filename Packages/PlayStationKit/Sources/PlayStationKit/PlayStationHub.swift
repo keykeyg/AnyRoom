@@ -20,19 +20,6 @@ public struct PSConsole: Identifiable, Equatable, Sendable {
     public var kindName: String { isPS5 ? "PS5" : "PS4" }
 }
 
-/// Stream quality the user picks in Settings; read when a stream starts.
-public enum PSStreamQuality: String, CaseIterable, Identifiable, Sendable {
-    case p720 = "720p"
-    case p1080 = "1080p"
-    public var id: String { rawValue }
-    var size: (width: UInt32, height: UInt32) {
-        switch self {
-        case .p720: return (1280, 720)
-        case .p1080: return (1920, 1080)
-        }
-    }
-}
-
 @MainActor
 public final class PlayStationHub: ObservableObject {
     public static let shared = PlayStationHub()
@@ -42,10 +29,14 @@ public final class PlayStationHub: ObservableObject {
     @Published public private(set) var psnOnlineId = ""
     @Published public private(set) var isSearching = false
 
-    /// Stream settings, kept in UserDefaults.
-    @AppStorage("anyroom.ps.quality") public var quality: PSStreamQuality = .p1080
-    @AppStorage("anyroom.ps.fps60") public var sixtyFPS = true
-    @AppStorage("anyroom.ps.hevc") public var preferHEVC = true
+    /// Stream settings, kept in UserDefaults. `mode` is shared with the Xbox side through the app.
+    @Published public var mode: AnyroomStreamMode =
+        AnyroomStreamMode(rawValue: UserDefaults.standard.string(forKey: "anyroom.mode") ?? "") ?? .quality {
+        didSet { UserDefaults.standard.set(mode.rawValue, forKey: "anyroom.mode") }
+    }
+    @Published public var preferHEVC: Bool = UserDefaults.standard.object(forKey: "anyroom.ps.hevc") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(preferHEVC, forKey: "anyroom.ps.hevc") }
+    }
 
     let hostStore: HostStore
     private var displayHosts: [String: DisplayHost] = [:]
@@ -255,20 +246,19 @@ public final class PlayStationHub: ObservableObject {
         guard let host = displayHosts[console.id], let registered = host.registeredHost, !host.hostAddress.isEmpty else {
             return nil
         }
-        let size = quality.size
         // H.265 halves the bitrate for the same picture; PS4 only speaks H.264.
-        let codec = (console.isPS5 && preferHEVC) ? 1 : 0
-        let bitrate: UInt32 = quality == .p1080 ? (codec == 1 ? 15_000 : 20_000) : 10_000
+        let hevc = console.isPS5 && preferHEVC
+        let params = mode.playStation(hevc: hevc)
         return StreamConnectInfo(
             host: host.hostAddress,
             ps5: console.isPS5,
             registKey: registered.rpRegistKey,
             morning: registered.rpKey,
-            videoWidth: size.width,
-            videoHeight: size.height,
-            videoMaxFps: sixtyFPS ? 60 : 30,
-            videoBitrate: bitrate,
-            videoCodec: codec
+            videoWidth: params.width,
+            videoHeight: params.height,
+            videoMaxFps: params.fps,
+            videoBitrate: params.bitrate,
+            videoCodec: hevc ? 1 : 0
         )
     }
 
