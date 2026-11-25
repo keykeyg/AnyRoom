@@ -39,3 +39,23 @@ jobs:
         if: failure()
         run: |
           grep -E "error:|\*\* BUILD FAILED" build.log | head -40 | while IFS= read -r l; do echo "::error::${l//%/%25}"; done
+
+  playstationkit:
+    # Compiles the PlayStation package on its own for Apple TV, so its errors show up even before the app uses it.
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: Build PlayStationKit (tvOS device)
+        working-directory: Packages/PlayStationKit
+        run: |
+          set -o pipefail
+          xcodebuild -quiet -scheme PlayStationKit -destination 'generic/platform=tvOS' \
+            -derivedDataPath "$RUNNER_TEMP/dd" build 2>&1 | tee build.log
+      - name: Report errors
+        if: failure()
+        run: |
+          grep -E "error:" Packages/PlayStationKit/build.log | sort -u | head -40 | while IFS= read -r l; do echo "::error::${l//%/%25}"; done
