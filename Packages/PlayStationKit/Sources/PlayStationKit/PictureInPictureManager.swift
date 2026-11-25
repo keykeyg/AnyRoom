@@ -40,7 +40,9 @@ final class PictureInPictureManager: NSObject, ObservableObject {
         )
         let controller = AVPictureInPictureController(contentSource: contentSource)
         controller.delegate = self
+        #if os(iOS)
         controller.canStartPictureInPictureAutomaticallyFromInline = true
+        #endif
         pipController = controller
 
         possibleObservation = controller.observe(\.isPictureInPicturePossible, options: [.initial, .new]) { [weak self] ctrl, _ in
