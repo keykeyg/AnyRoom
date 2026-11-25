@@ -30,7 +30,17 @@ jobs:
           git clone -q https://github.com/ForWard-Technologies-LLC/Pylux.git "$RUNNER_TEMP/pylux"
           cd "$RUNNER_TEMP/pylux"
           git checkout -q "$PYLUX_SHA"
-          git submodule update --init --depth 1 third-party/nanopb third-party/jerasure third-party/gf-complete third-party/curl
+          for m in third-party/nanopb third-party/curl; do
+            git submodule update --init --depth 1 "$m" || git submodule update --init "$m" || { echo "::error::could not fetch $m"; exit 1; }
+          done
+          # jerasure and gf-complete live on git.sr.ht, which can refuse CI runners: fall back to the
+          # copies in Tools/chiaki-build/vendor (same commits as Pylux pins, BSD-licensed).
+          for m in jerasure gf-complete; do
+            if ! timeout 120 git submodule update --init "third-party/$m"; then
+              echo "::warning::git.sr.ht unreachable for $m; using the vendored copy"
+              rm -rf "third-party/$m"; tar -xzf "$GITHUB_WORKSPACE/Tools/chiaki-build/vendor/$m.tgz" -C third-party
+            fi
+          done
           for p in "$GITHUB_WORKSPACE"/Tools/chiaki-build/patches/*.patch; do
             [ -e "$p" ] || continue
             echo "applying $(basename "$p")"; git apply "$p"
