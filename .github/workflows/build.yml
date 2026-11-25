@@ -3,6 +3,7 @@ name: build
 on:
   push:
     branches: [main]
+    paths-ignore: [Tools/chiaki-build/**, .github/workflows/chiaki-tvos.yml, '**.md']
   pull_request:
   workflow_dispatch:
 

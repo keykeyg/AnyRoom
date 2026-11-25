@@ -1,0 +1,75 @@
+name: chiaki-tvos
+# Builds the PlayStation Remote Play core (Pylux's fork of chiaki-ng, AGPL-3.0, pinned below) and its
+# dependencies for Apple TV, packs it as Chiaki.xcframework (tvOS device + tvOS arm64 simulator) and
+# publishes it as the release asset that Tools/chiaki-build/fetch.sh downloads for app builds.
+# Rebuild by hand (Actions > chiaki-tvos > Run workflow) or by changing Tools/chiaki-build/.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [Tools/chiaki-build/**, .github/workflows/chiaki-tvos.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: chiaki-tvos
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pinned source
+        run: |
+          set -a; . Tools/chiaki-build/pin.env; set +a
+          cat Tools/chiaki-build/pin.env >> "$GITHUB_ENV"
+          git clone -q https://github.com/ForWard-Technologies-LLC/Pylux.git "$RUNNER_TEMP/pylux"
+          cd "$RUNNER_TEMP/pylux"
+          git checkout -q "$PYLUX_SHA"
+          git submodule update --init --depth 1 third-party/nanopb third-party/jerasure third-party/gf-complete third-party/curl
+          for p in "$GITHUB_WORKSPACE"/Tools/chiaki-build/patches/*.patch; do
+            [ -e "$p" ] || continue
+            echo "applying $(basename "$p")"; git apply "$p"
+          done
+
+      - name: Tools
+        run: |
+          brew install cmake ninja protobuf@29 python-setuptools || brew install cmake ninja protobuf@29 python-setuptools
+          pip3 install --user --break-system-packages 'protobuf>=5,<6'
+          echo "$(brew --prefix)/opt/protobuf@29/bin" >> "$GITHUB_PATH"
+          curl -fsSL -o "$RUNNER_TEMP/ios.toolchain.cmake" \
+            "https://raw.githubusercontent.com/leetal/ios-cmake/$IOS_CMAKE_REF/ios.toolchain.cmake"
+
+      - name: Build for tvOS device and simulator
+        run: bash Tools/chiaki-build/build.sh "$RUNNER_TEMP/pylux" "$RUNNER_TEMP/ios.toolchain.cmake" "$RUNNER_TEMP/out"
+
+      - name: Report errors
+        if: failure()
+        run: |
+          for f in "$RUNNER_TEMP"/out/*.log; do
+            [ -f "$f" ] || continue
+            grep -E "error:|Error |CMake Error|FAILED:" "$f" | head -25 | while IFS= read -r l; do echo "::error title=$(basename "$f")::${l//%/%25}"; done
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: chiaki-tvos-logs
+          path: ${{ runner.temp }}/out/*.log
+          retention-days: 7
+
+      - name: Publish the xcframework as a release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="chiaki-tvos-${PYLUX_SHA:0:7}"
+          cd "$RUNNER_TEMP/out"
+          shasum -a 256 Chiaki.xcframework.zip | tee Chiaki.xcframework.zip.sha256
+          gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create "$TAG" -R "$GITHUB_REPOSITORY" --prerelease --title "PlayStation core for tvOS (Pylux ${PYLUX_SHA:0:7})" \
+              --notes "Chiaki.xcframework built by .github/workflows/chiaki-tvos.yml from https://github.com/ForWard-Technologies-LLC/Pylux/tree/$PYLUX_SHA (AGPL-3.0). Source and patches: Tools/chiaki-build/."
+          gh release upload "$TAG" -R "$GITHUB_REPOSITORY" --clobber Chiaki.xcframework.zip Chiaki.xcframework.zip.sha256
