@@ -5,7 +5,6 @@
 import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
-import WebKit
 import os.log
 
 private let settingsLog = OSLog(subsystem: "com.pylux.stream", category: "Settings")
