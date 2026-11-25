@@ -6,7 +6,7 @@
 set -euo pipefail
 trap 'echo "::error::build.sh line $LINENO: $BASH_COMMAND"' ERR
 SRC="$1"; TOOLCHAIN="$2"; OUT="$3"
-TVOS_MIN="${TVOS_MIN:-17.0}"
+TVOS_MIN="${TVOS_MIN:-13.0}"  # must match the 13.0 Pylux forces as CMAKE_OSX_DEPLOYMENT_TARGET
 mkdir -p "$OUT"
 
 build_platform() {
@@ -20,6 +20,8 @@ build_platform() {
     -DCMAKE_BUILD_TYPE=Release \
     -DUSE_LIBIDN2=OFF -DCURL_USE_LIBPSL=OFF -DUSE_NGHTTP2=OFF \
     -DHAVE_FORK=OFF \
+    -DMBEDTLS_FATAL_WARNINGS=OFF \
+    -DCMAKE_C_FLAGS="-Wno-overriding-option" -DCMAKE_CXX_FLAGS="-Wno-overriding-option" \
     -DCMAKE_POLICY_VERSION_MINIMUM=3.5 > "$OUT/configure-$platform.log" 2>&1 \
     || { tail -60 "$OUT/configure-$platform.log"; return 1; }
   cmake --build "$dir" --config Release --target chiaki-lib > "$OUT/build-$platform.log" 2>&1 \
