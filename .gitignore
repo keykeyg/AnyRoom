@@ -58,3 +58,4 @@ worktree/stratix-vp9-metal
 /worktrees
 __pycache__/
 *.pyc
+secrets.enc
