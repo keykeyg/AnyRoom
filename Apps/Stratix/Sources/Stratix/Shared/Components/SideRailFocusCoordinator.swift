@@ -13,7 +13,7 @@ enum SideRailFocusTarget: Hashable {
 
 /// Shared ordering and focus-entry rules for the side rail so the view layer stays mostly declarative.
 enum SideRailFocusCoordinator {
-    private static let preferredNavOrder: [SideRailNavID] = [.search, .home, .library, .consoles]
+    private static let preferredNavOrder: [SideRailNavID] = [.consoles, .search, .home, .library]
 
     /// Reorders nav items into the canonical shell order even if the source state arrives unsorted.
     static func orderedNavItems(from navItems: [SideRailNavItemViewState]) -> [SideRailNavItemViewState] {

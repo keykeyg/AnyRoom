@@ -22,6 +22,7 @@ final class CloudLibraryRouteState {
         case rememberedSearch = "remembered_search"
         case rememberedConsoles = "remembered_consoles"
         case defaultHome = "default_home"
+        case defaultConsoles = "default_consoles"
     }
 
     var browseRoute: CloudLibraryBrowseRoute = .home
@@ -49,7 +50,8 @@ final class CloudLibraryRouteState {
 
         guard settingsStore.shell.rememberLastSection,
               let restoredRoute = CloudLibraryBrowseRoute(rawValue: settingsStore.shell.lastDestinationRawValue) else {
-            applyRestoredBrowseRoute(.home, diagnosticsSource: .defaultHome)
+            // Anyroom opens on the Consoles page the first time: your own Xbox and PS5 come first.
+            applyRestoredBrowseRoute(.consoles, diagnosticsSource: .defaultConsoles)
             return
         }
         applyRestoredBrowseRoute(
