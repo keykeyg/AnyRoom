@@ -1,0 +1,93 @@
+name: release
+# Archives the Apple TV app, signs it with Xcode's automatic signing and uploads it to
+# App Store Connect (TestFlight first, then App Store review from App Store Connect).
+#
+# Needs these repository secrets (Settings > Secrets and variables > Actions):
+#   ASC_KEY_ID      App Store Connect API key ID
+#   ASC_ISSUER_ID   App Store Connect issuer ID
+#   ASC_KEY_P8      full text of the AuthKey_XXXX.p8 file (Admin role, so Xcode can manage signing)
+# And an App Store Connect app record for bundle ID com.keyangodarzi.anyroom.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Marketing version (e.g. 0.1.0)
+        default: 0.1.0
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  TEAM_ID: U5Y46X5XX5
+  BUNDLE_ID: com.keyangodarzi.anyroom
+
+jobs:
+  tvos:
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: App Store Connect key
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          test -n "$ASC_KEY_P8" && test -n "$ASC_KEY_ID" && test -n "$ASC_ISSUER_ID" || { echo "::error::Add the ASC_KEY_ID, ASC_ISSUER_ID and ASC_KEY_P8 secrets first"; exit 1; }
+          mkdir -p "$RUNNER_TEMP/asc"
+          printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/AuthKey.p8"
+          chmod 600 "$RUNNER_TEMP/asc/AuthKey.p8"
+          {
+            echo "ASC_AUTH=-allowProvisioningUpdates -authenticationKeyPath $RUNNER_TEMP/asc/AuthKey.p8 -authenticationKeyID $ASC_KEY_ID -authenticationKeyIssuerID $ASC_ISSUER_ID"
+          } >> "$GITHUB_ENV"
+
+      - name: Version and build number
+        run: |
+          PLIST=Apps/Stratix/Stratix/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${{ github.event.inputs.version }}" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" "$PLIST"
+
+      - name: Archive
+        run: |
+          set -o pipefail
+          xcodebuild -workspace Stratix.xcworkspace -scheme Stratix -configuration Release \
+            -destination 'generic/platform=tvOS' \
+            -archivePath "$RUNNER_TEMP/Anyroom.xcarchive" \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/spm" \
+            CODE_SIGN_STYLE=Automatic DEVELOPMENT_TEAM="$TEAM_ID" \
+            $ASC_AUTH archive 2>&1 | tee archive.log | grep -E "error:|warning: .*sign|\*\* ARCHIVE" || true
+          test -d "$RUNNER_TEMP/Anyroom.xcarchive"
+
+      - name: Export and upload to App Store Connect
+        run: |
+          cat > "$RUNNER_TEMP/export.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Anyroom.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/export.plist" -exportPath "$RUNNER_TEMP/out" $ASC_AUTH
+
+      - name: Report errors
+        if: failure()
+        run: |
+          test -f archive.log && grep -E "error:" archive.log | head -40 | while IFS= read -r l; do echo "::error::${l//%/%25}"; done || true
+
+      - name: Remove key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/asc"
