@@ -17,8 +17,8 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "Chiaki",
-            url: "https://github.com/keykeyg/AnyRoom/releases/download/chiaki-tvos-ca87a49-r6/Chiaki.xcframework.zip",
-            checksum: "6557169a8c8981b332fb1d4dd34a9f798344a4af7ac90e7585d9effd72848fba"
+            url: "https://github.com/keykeyg/AnyRoom/releases/download/chiaki-tvos-ca87a49-r7/Chiaki.xcframework.zip",
+            checksum: "aabfbcd9715a7894778b56c147a4c74781f9cbeafbd9018d0fb1df8459efd9ff"
         ),
         .target(
             name: "ChiakiBridge",
