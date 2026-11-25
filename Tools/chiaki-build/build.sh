@@ -39,12 +39,14 @@ HDR="$OUT/include"
 rm -rf "$HDR"; mkdir -p "$HDR"
 cp -R "$SRC/lib/include/chiaki" "$HDR/"
 find "$OUT/build-TVOS" -path "*include/chiaki/*.h" -exec cp {} "$HDR/chiaki/" \;
+rm -f "$HDR/chiaki/version.h.in"
 cat > "$HDR/module.modulemap" <<'EOF'
 module Chiaki {
     umbrella "chiaki"
+    exclude header "chiaki/ffmpegdecoder.h"
+    exclude header "chiaki/pidecoder.h"
     export *
     module * { export * }
-    link "c++"
 }
 EOF
 

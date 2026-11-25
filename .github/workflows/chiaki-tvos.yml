@@ -78,9 +78,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="chiaki-tvos-${PYLUX_SHA:0:7}"
+          TAG="chiaki-tvos-${PYLUX_SHA:0:7}-r${{ github.run_number }}"
           cd "$RUNNER_TEMP/out"
           shasum -a 256 Chiaki.xcframework.zip | tee Chiaki.xcframework.zip.sha256
+          echo "::notice title=Chiaki.xcframework::tag $TAG sha256 $(cut -d' ' -f1 Chiaki.xcframework.zip.sha256)"
           gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
             gh release create "$TAG" -R "$GITHUB_REPOSITORY" --prerelease --title "PlayStation core for tvOS (Pylux ${PYLUX_SHA:0:7})" \
               --notes "Chiaki.xcframework built by .github/workflows/chiaki-tvos.yml from https://github.com/ForWard-Technologies-LLC/Pylux/tree/$PYLUX_SHA (AGPL-3.0). Source and patches: Tools/chiaki-build/."
