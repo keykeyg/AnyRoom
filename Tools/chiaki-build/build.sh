@@ -4,6 +4,7 @@
 #   build.sh <pylux-source> <ios.toolchain.cmake> <out-dir>
 # Runs on a macOS runner (see .github/workflows/chiaki-tvos.yml).
 set -euo pipefail
+trap 'echo "::error::build.sh line $LINENO: $BASH_COMMAND"' ERR
 SRC="$1"; TOOLCHAIN="$2"; OUT="$3"
 TVOS_MIN="${TVOS_MIN:-17.0}"
 mkdir -p "$OUT"

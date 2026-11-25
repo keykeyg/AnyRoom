@@ -25,6 +25,7 @@ jobs:
 
       - name: Pinned source
         run: |
+          trap 'echo "::error::line $LINENO: $BASH_COMMAND"' ERR
           set -a; . Tools/chiaki-build/pin.env; set +a
           cat Tools/chiaki-build/pin.env >> "$GITHUB_ENV"
           git clone -q https://github.com/ForWard-Technologies-LLC/Pylux.git "$RUNNER_TEMP/pylux"
@@ -36,7 +37,7 @@ jobs:
           # jerasure and gf-complete live on git.sr.ht, which can refuse CI runners: fall back to the
           # copies in Tools/chiaki-build/vendor (same commits as Pylux pins, BSD-licensed).
           for m in jerasure gf-complete; do
-            if ! timeout 120 git submodule update --init "third-party/$m"; then
+            if ! git submodule update --init "third-party/$m"; then
               echo "::warning::git.sr.ht unreachable for $m; using the vendored copy"
               rm -rf "third-party/$m"; tar -xzf "$GITHUB_WORKSPACE/Tools/chiaki-build/vendor/$m.tgz" -C third-party
             fi
@@ -48,6 +49,7 @@ jobs:
 
       - name: Tools
         run: |
+          trap 'echo "::error::line $LINENO: $BASH_COMMAND"' ERR
           brew install cmake ninja protobuf@29 python-setuptools || brew install cmake ninja protobuf@29 python-setuptools
           pip3 install --user --break-system-packages 'protobuf>=5,<6'
           echo "$(brew --prefix)/opt/protobuf@29/bin" >> "$GITHUB_PATH"
