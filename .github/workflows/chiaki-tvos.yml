@@ -26,8 +26,8 @@ jobs:
       - name: Pinned source
         run: |
           trap 'echo "::error::line $LINENO: $BASH_COMMAND"' ERR
-          set -a; . Tools/chiaki-build/pin.env; set +a
-          cat Tools/chiaki-build/pin.env >> "$GITHUB_ENV"
+          set -a; . Tools/chiaki-build/pin.conf; set +a
+          cat Tools/chiaki-build/pin.conf >> "$GITHUB_ENV"
           git clone -q https://github.com/ForWard-Technologies-LLC/Pylux.git "$RUNNER_TEMP/pylux"
           cd "$RUNNER_TEMP/pylux"
           git checkout -q "$PYLUX_SHA"
